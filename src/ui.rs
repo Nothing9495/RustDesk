@@ -117,6 +117,17 @@ pub fn start(args: &mut [String]) {
         frame.register_behavior("connection-manager", move || {
             Box::new(cm::SciterConnectionManager::new())
         });
+
+        // 添加以下代码，设置窗口样式以阻止任务栏图标显示
+        #[cfg(windows)]
+        unsafe {
+            use winapi::um::winuser::{SetWindowLongW, GWL_EXSTYLE, WS_EX_TOOLWINDOW, GetWindowLongW};
+            let hwnd = frame.get_hwnd() as _;
+            // 获取当前样式并添加 WS_EX_TOOLWINDOW
+            let current_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+            SetWindowLongW(hwnd, GWL_EXSTYLE, current_style | WS_EX_TOOLWINDOW);
+        }
+
         page = "cm.html";
     } else if (args[0] == "--connect"
         || args[0] == "--file-transfer"
