@@ -537,96 +537,98 @@ pub mod client {
     }
 
     pub(crate) fn start_portable_service(para: StartPara) -> ResultType<()> {
-        log::info!("start portable service");
-        if RUNNING.lock().unwrap().clone() {
-            bail!("already running");
-        }
-        if SHMEM.lock().unwrap().is_none() {
-            let displays = scrap::Display::all()?;
-            if displays.is_empty() {
-                bail!("no display available!");
-            }
-            let mut max_pixel = 0;
-            let align = 64;
-            for d in displays {
-                let resolutions = crate::platform::resolutions(&d.name());
-                for r in resolutions {
-                    let pixel =
-                        utils::align(r.width as _, align) * utils::align(r.height as _, align);
-                    if max_pixel < pixel {
-                        max_pixel = pixel;
-                    }
-                }
-            }
-            let shmem_size = utils::align(ADDR_CAPTURE_FRAME + max_pixel * 4, align);
-            // os error 112, no enough space
-            *SHMEM.lock().unwrap() = Some(crate::portable_service::SharedMemory::create(
-                crate::portable_service::SHMEM_NAME,
-                shmem_size,
-            )?);
-            shutdown_hooks::add_shutdown_hook(drop_portable_service_shared_memory);
-        }
-        if let Some(shmem) = SHMEM.lock().unwrap().as_mut() {
-            unsafe {
-                libc::memset(shmem.as_ptr() as _, 0, shmem.len() as _);
-            }
-        }
-        match para {
-            StartPara::Direct => {
-                if let Err(e) = crate::platform::run_background(
-                    &std::env::current_exe()?.to_string_lossy().to_string(),
-                    "--portable-service",
-                ) {
-                    *SHMEM.lock().unwrap() = None;
-                    bail!("Failed to run portable service process: {}", e);
-                }
-            }
-            StartPara::Logon(username, password) => {
-                #[allow(unused_mut)]
-                let mut exe = std::env::current_exe()?.to_string_lossy().to_string();
-                #[cfg(feature = "flutter")]
-                {
-                    if let Some(dir) = Path::new(&exe).parent() {
-                        if set_path_permission(Path::new(dir), "RX").is_err() {
-                            *SHMEM.lock().unwrap() = None;
-                            bail!("Failed to set permission of {:?}", dir);
-                        }
-                    }
-                }
-                #[cfg(not(feature = "flutter"))]
-                match hbb_common::directories_next::UserDirs::new() {
-                    Some(user_dir) => {
-                        let dir = user_dir
-                            .home_dir()
-                            .join("AppData")
-                            .join("Local")
-                            .join("rustdesk-sciter");
-                        if std::fs::create_dir_all(&dir).is_ok() {
-                            let dst = dir.join("rustdesk.exe");
-                            if std::fs::copy(&exe, &dst).is_ok() {
-                                if dst.exists() {
-                                    if set_path_permission(&dir, "RX").is_ok() {
-                                        exe = dst.to_string_lossy().to_string();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    None => {}
-                }
-                if let Err(e) = crate::platform::windows::create_process_with_logon(
-                    username.as_str(),
-                    password.as_str(),
-                    &exe,
-                    "--portable-service",
-                ) {
-                    *SHMEM.lock().unwrap() = None;
-                    bail!("Failed to run portable service process: {}", e);
-                }
-            }
-        }
-        let _sender = SENDER.lock().unwrap();
-        Ok(())
+        // log::info!("start portable service");
+        // if RUNNING.lock().unwrap().clone() {
+        //     bail!("already running");
+        // }
+        // if SHMEM.lock().unwrap().is_none() {
+        //     let displays = scrap::Display::all()?;
+        //     if displays.is_empty() {
+        //         bail!("no display available!");
+        //     }
+        //     let mut max_pixel = 0;
+        //     let align = 64;
+        //     for d in displays {
+        //         let resolutions = crate::platform::resolutions(&d.name());
+        //         for r in resolutions {
+        //             let pixel =
+        //                 utils::align(r.width as _, align) * utils::align(r.height as _, align);
+        //             if max_pixel < pixel {
+        //                 max_pixel = pixel;
+        //             }
+        //         }
+        //     }
+        //     let shmem_size = utils::align(ADDR_CAPTURE_FRAME + max_pixel * 4, align);
+        //     // os error 112, no enough space
+        //     *SHMEM.lock().unwrap() = Some(crate::portable_service::SharedMemory::create(
+        //         crate::portable_service::SHMEM_NAME,
+        //         shmem_size,
+        //     )?);
+        //     shutdown_hooks::add_shutdown_hook(drop_portable_service_shared_memory);
+        // }
+        // if let Some(shmem) = SHMEM.lock().unwrap().as_mut() {
+        //     unsafe {
+        //         libc::memset(shmem.as_ptr() as _, 0, shmem.len() as _);
+        //     }
+        // }
+        // match para {
+        //     StartPara::Direct => {
+        //         if let Err(e) = crate::platform::run_background(
+        //             &std::env::current_exe()?.to_string_lossy().to_string(),
+        //             "--portable-service",
+        //         ) {
+        //             *SHMEM.lock().unwrap() = None;
+        //             bail!("Failed to run portable service process: {}", e);
+        //         }
+        //     }
+        //     StartPara::Logon(username, password) => {
+        //         #[allow(unused_mut)]
+        //         let mut exe = std::env::current_exe()?.to_string_lossy().to_string();
+        //         #[cfg(feature = "flutter")]
+        //         {
+        //             if let Some(dir) = Path::new(&exe).parent() {
+        //                 if set_path_permission(Path::new(dir), "RX").is_err() {
+        //                     *SHMEM.lock().unwrap() = None;
+        //                     bail!("Failed to set permission of {:?}", dir);
+        //                 }
+        //             }
+        //         }
+        //         #[cfg(not(feature = "flutter"))]
+        //         match hbb_common::directories_next::UserDirs::new() {
+        //             Some(user_dir) => {
+        //                 let dir = user_dir
+        //                     .home_dir()
+        //                     .join("AppData")
+        //                     .join("Local")
+        //                     .join("rustdesk-sciter");
+        //                 if std::fs::create_dir_all(&dir).is_ok() {
+        //                     let dst = dir.join("rustdesk.exe");
+        //                     if std::fs::copy(&exe, &dst).is_ok() {
+        //                         if dst.exists() {
+        //                             if set_path_permission(&dir, "RX").is_ok() {
+        //                                 exe = dst.to_string_lossy().to_string();
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //             None => {}
+        //         }
+        //         if let Err(e) = crate::platform::windows::create_process_with_logon(
+        //             username.as_str(),
+        //             password.as_str(),
+        //             &exe,
+        //             "--portable-service",
+        //         ) {
+        //             *SHMEM.lock().unwrap() = None;
+        //             bail!("Failed to run portable service process: {}", e);
+        //         }
+        //     }
+        // }
+        // let _sender = SENDER.lock().unwrap();
+        // Ok(())
+        log::info!("portable service is permanently disabled");
+        bail!("Portable service is disabled")
     }
 
     pub extern "C" fn drop_portable_service_shared_memory() {
@@ -954,7 +956,7 @@ pub mod client {
     }
 
     pub fn running() -> bool {
-        RUNNING.lock().unwrap().clone()
+        false
     }
 }
 
