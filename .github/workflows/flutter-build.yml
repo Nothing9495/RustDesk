@@ -9,6 +9,14 @@ on:
       upload-tag:
         type: string
         default: "nightly"
+  workflow_dispatch:
+    inputs:
+      upload-artifact:
+        type: boolean
+        default: true
+      upload-tag:
+        type: string
+        default: "nightly"
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
 # variables from this workflow!
@@ -499,7 +507,7 @@ jobs:
             rustdesk*-aarch64.dmg
 
   build-rustdesk-ios:
-    if: ${{ inputs.upload-artifact }}
+    if: false
     name: build rustdesk ios ipa
     runs-on: ${{ matrix.job.os }}
     needs: [generate-bridge]
@@ -618,7 +626,6 @@ jobs:
       #       flutter/build/ios/ipa/*.ipa
 
   build-rustdesk-ios-selfhost:
-    #if: ${{ inputs.upload-artifact }}
     if: false
     runs-on: [self-hosted, macOS, ARM64]
     needs: [generate-bridge]
@@ -676,6 +683,7 @@ jobs:
       #       flutter/build/ios/ipa/*.ipa
 
   build-for-macOS:
+    if: false
     name: ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     needs: [generate-bridge]
@@ -1391,6 +1399,7 @@ jobs:
             signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk
 
   build-rustdesk-linux:
+    if: false
     needs: [generate-bridge]
     name: build rustdesk linux ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.on }}
@@ -1727,7 +1736,7 @@ jobs:
             res/rustdesk-${{ env.VERSION }}*.zst
 
   build-rustdesk-linux-sciter:
-    if: ${{ inputs.upload-artifact }}
+    if: false
     runs-on: ${{ matrix.job.on }}
     name: build-rustdesk-linux-sciter ${{ matrix.job.target }}
     strategy:
@@ -1947,7 +1956,7 @@ jobs:
     name: Build appimage ${{ matrix.job.target }}
     needs: [build-rustdesk-linux]
     runs-on: ubuntu-22.04
-    if: ${{ inputs.upload-artifact }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -2002,7 +2011,7 @@ jobs:
       - build-rustdesk-linux
       - build-rustdesk-linux-sciter
     runs-on: ${{ matrix.job.on }}
-    if: ${{ inputs.upload-artifact }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
