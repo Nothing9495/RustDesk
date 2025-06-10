@@ -267,6 +267,9 @@ void runMultiWindow(
 
 void runConnectionManagerScreen() async {
   await initEnv(kAppTypeConnectionManager);
+
+  await windowManager.setTitle("RustDesk - Connection Manager");
+
   _runApp(
     '',
     const DesktopServerPage(),

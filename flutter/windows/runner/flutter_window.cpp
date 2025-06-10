@@ -39,6 +39,15 @@ bool FlutterWindow::OnCreate() {
         registry->GetRegistrarForPlugin("FlutterGpuTextureRendererPluginCApi"));
   });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+
+  std::wstring title = GetWindowText();
+  bool is_cm = (title.find(L"Connection Manager") != std::wstring::npos);
+
+  // 在窗口创建时为连接管理器设置showOnTaskBar=false
+  if (!Win32Window::CreateAndShow(title, origin, size, !is_cm)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -71,4 +80,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+}
+
+std::wstring FlutterWindow::GetWindowText() {
+  TCHAR windowTitle[256];
+  GetWindowText(GetHandle(), windowTitle, 256);
+  return std::wstring(windowTitle);
 }
